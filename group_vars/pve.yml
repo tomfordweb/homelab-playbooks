@@ -42,10 +42,11 @@ pve_hosts:
   - hostname: swarm-manager-01
     vmid: "201"
     template: "{{ pve_host_default_template }}"
-    memory: "1024"
+    memory: "2048"
     proxmox_default_behavior: compatibility
 
   - hostname: swarm-node-01-01
+    memory: "2048"
     vmid: "202"
     template: "{{ pve_host_default_template }}"
     proxmox_default_behavior: compatibility
