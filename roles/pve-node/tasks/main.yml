@@ -1,0 +1,23 @@
+---
+- name: Create the container
+  tags: ["vm"]
+  community.general.proxmox:
+    vmid: 201
+    proxmox_default_behavior: compatibility
+    node: "{{ pve_node }}"
+    api_user: "{{ username }}@{{ pve_node }}"
+    api_password: "{{ vault_pve_user_password }}"
+    api_host: "{{ pve_node }}"
+    password: "123456"
+    storage: "pve-vms"
+    hostname: "homelab-test-node-1"
+    ostemplate: "local:vztmpl/ubuntu-20.10-standard_20.10-1_amd64.tar.gz"
+
+- name: Start container
+  tags: ["vm"]
+  community.general.proxmox:
+    vmid: 201
+    api_user: "{{ username }}@{{ pve_node }}"
+    api_password: "{{ vault_pve_user_password }}"
+    api_host: "{{ pve_node }}"
+    state: started

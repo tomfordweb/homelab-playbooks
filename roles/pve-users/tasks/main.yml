@@ -1,0 +1,19 @@
+---
+# tasks file for roles/pve-users
+- name: "Create the {{ pve_admin_group }} group"
+  proxmox_group:
+    name: "{{ pve_admin_group }}"
+
+- name: "Create the {{ username }} user"
+  proxmox_user:
+    name: "{{ username }}@{{ pve_node }}"
+    password: "{{ vault_pve_user_password }}"
+    groups:
+      - "{{ pve_admin_group }}"
+
+- name: "Create the {{ admin_acl_name }} ACL"
+  proxmox_acl:
+    path: /
+    roles: ["PVETemplateUser", "PVEVMAdmin", "PVEDatastoreAdmin"]
+    users:
+      - "{{ username }}@{{ pve_node }}"

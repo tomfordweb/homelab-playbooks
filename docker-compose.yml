@@ -1,0 +1,13 @@
+version: "3.7"
+
+services:
+  ansible:
+    image: tomfordweb/ansible-control
+    container_name: ansible
+    entrypoint: ["ansible-playbook", "--vault-password-file", ".vault_password"]
+    volumes:
+      - ./:/ansible
+      - /home/tom/.vault_password:/ansible/.vault_password:ro
+      - $SSH_AUTH_SOCK:/ssh-agent
+    environment:
+      SSH_AUTH_SOCK: /ssh-agent

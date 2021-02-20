@@ -1,0 +1,22 @@
+{
+  "name": "homelab-playbooks",
+  "version": "1.0.0",
+  "description": "Ansible playbooks for ubuntu based distros.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tomfordweb/devtools.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tomfordweb/devtools/issues"
+  },
+  "homepage": "https://github.com/tomfordweb/devtools#readme",
+  "dependencies": {
+    "prettier": "^2.2.1"
+  }
+}

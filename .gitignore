@@ -1,0 +1,4 @@
+*.swo
+*.swp
+.vault_password
+node_modules

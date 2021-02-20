@@ -1,0 +1,9 @@
+---
+- remote_user: root
+  become: false
+  gather_facts: true
+  hosts: pve
+  roles:
+    - role: pve-ansible-base
+    - role: pve-users
+    - role: pve-node
