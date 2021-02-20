@@ -1,19 +1,28 @@
 ---
 # tasks file for roles/pve-users
-- name: "Create the {{ pve_admin_group }} group"
+- name: "Create the 'pve_admins' groups"
+  tags: ["auth"]
+  with_items: "{{ pve_admins }}"
+  no_log: true
   proxmox_group:
-    name: "{{ pve_admin_group }}"
+    name: "{{ item.group }}"
 
-- name: "Create the {{ username }} user"
+- name: "Create the 'pve_admins' users"
+  tags: ["auth"]
+  with_items: "{{ pve_admins }}"
+  no_log: true
   proxmox_user:
-    name: "{{ username }}@{{ pve_node }}"
-    password: "{{ vault_pve_user_password }}"
+    name: "{{ item.name }}"
+    password: "{{ item.password }}"
     groups:
-      - "{{ pve_admin_group }}"
+      - "{{ item.group }}"
 
-- name: "Create the {{ admin_acl_name }} ACL"
+- name: "Create the 'pve_admins' roles"
+  tags: ["auth"]
+  with_items: "{{ pve_admins }}"
+  no_log: true
   proxmox_acl:
-    path: /
-    roles: ["PVETemplateUser", "PVEVMAdmin", "PVEDatastoreAdmin"]
+    path: "{{ item.acl.path }}"
+    roles: "{{ item.acl.roles }}"
     users:
-      - "{{ username }}@{{ pve_node }}"
+      - "{{ item.name }}"
