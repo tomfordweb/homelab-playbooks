@@ -5,19 +5,64 @@ node_name: pve
 #######################
 # Node administrators #
 #######################
-# The administrator that we will be running tasks as
-default_admin: midas@pve
 # A list of all of the admins on every host in this inventory
 pve_admins:
   - name: midas@pve
     password: !vault |
       $ANSIBLE_VAULT;1.1;AES256
-      63306536623766626130333861346162643863346464666361343838663739386661376633613131
-      3238383430663530303336373039646339636236663164330a616463323561366335616263363531
-      39346536366264633738383131346433316534616533643737666363613533396161393466626664
-      3963633636633132330a396438623231613034626565313166373232393033393464353064303764
-      3164
+      39386533303339366434613935396432323732373136383365343362656434666439366161636262
+      3162393635376234616234623633333134363337373938300a623666656233646331353963613136
+      38633232373537363662306562633736396130656137663137383866393737303763353136616661
+      3639616463396461660a643030393937623333356133376638333361623437653664306536313464
+      6235
+
     acl:
       path: "/"
       roles: ["PVETemplateUser", "PVEVMAdmin", "PVEDatastoreAdmin"]
     group: admin
+# The administrator that we will be running tasks as
+default_admin: "{{ pve_admins[0] }}"
+
+pve_host_password: !vault |
+  $ANSIBLE_VAULT;1.1;AES256
+  37366265393733633532356261343730636133316236333430303665336664326538323434646264
+  3264613961613762646266653939613961303830353237630a343233663364636139383764653937
+  64393063343665333735666364616463646535393638343830626538323962333262613036616233
+  6334366664636437650a333936663933626336616130326561376566626466333163613131336536
+  3036
+
+pve_host_storage: pve-vms
+pve_host_default_template: "local:vztmpl/ubuntu-20.10-standard_20.10-1_amd64.tar.gz"
+
+####################
+# Host Definitions #
+####################
+pve_hosts:
+  # Docker Swarm
+  - hostname: swarm-manager-01
+    vmid: "201"
+    template: "{{ pve_host_default_template }}"
+    memory: "1024"
+    proxmox_default_behavior: compatibility
+
+  - hostname: swarm-node-01-01
+    vmid: "202"
+    template: "{{ pve_host_default_template }}"
+    proxmox_default_behavior: compatibility
+
+  - hostname: swarm-node-01-02
+    vmid: "203"
+    memory: "2048"
+    template: "{{ pve_host_default_template }}"
+    proxmox_default_behavior: compatibility
+
+########################
+# Template Definitions #
+########################
+# The name of the pve disk to store templates on
+lxc_template_storage_location: local
+lxc_template_directory: /
+# Regex for the templates to download
+lxc_templates:
+  - "ubuntu-20.[0-9]+-standard"
+  - "debian-10-turnkey-mysql_16.[0-9]"

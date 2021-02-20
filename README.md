@@ -16,6 +16,16 @@ docker-compose run --entrypoint ansible-vault ansible encrypt_string --vault-pas
 
 Your terminal will spit out some yaml that you can now include in any variable you need.
 
+# Setup
+
+### LXC Templates
+
+If you need to update the template list, pass this argument on build
+
+```
+docker-compose run ansible homelab.yml --extra-vars "update_templates=yes"
+```
+
 # Thanks
 
 - https://github.com/lae/ansible-role-proxmox

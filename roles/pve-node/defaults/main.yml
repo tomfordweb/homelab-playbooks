@@ -1,1 +1,4 @@
 ---
+# If you would like to update your template, you can define this to
+# be a truthy value
+update_templates: no

@@ -1,23 +1,80 @@
 ---
-- name: Create the container
-  tags: ["vm"]
-  community.general.proxmox:
-    vmid: 201
-    proxmox_default_behavior: compatibility
-    node: "{{ pve_node }}"
-    api_user: "{{ username }}@{{ pve_node }}"
-    api_password: "{{ vault_pve_user_password }}"
-    api_host: "{{ pve_node }}"
-    password: "123456"
-    storage: "pve-vms"
-    hostname: "homelab-test-node-1"
-    ostemplate: "local:vztmpl/ubuntu-20.10-standard_20.10-1_amd64.tar.gz"
+- name: Update PVE template list
+  tags: ["template"]
+  command: pveam update
+  when: update_templates
 
-- name: Start container
+- name: Find available templates
+  tags: ["template"]
+  shell: pveam available | awk '{print $2}'
+  changed_when: false
+  register: __all_templates
+  when: update_templates
+
+- name: Filter templates against available
+  tags: ["template"]
+  set_fact:
+    __template_list: "{{ __template_list|default([]) + __all_templates.stdout_lines|select('search', item)|sort }}"
+  with_items: "{{ lxc_templates }}"
+  when: update_templates
+
+- name: Download available templates
+  when: update_templates
+  shell: |
+    pveam download {{ lxc_template_storage_location|default('local') }} {{ item }}
+    creates={{ lxc_template_directory }}/{{ item }}
+  with_items: "{{ __template_list }}"
+
+# Currently necessary when you need to modify container resources
+
+# - name: stop containers
+#   tags: ["vm"]
+#   community.general.proxmox:
+#     vmid: "{{ item.vmid }}"
+#     api_user: "{{ default_admin.name }}"
+#     api_password: "{{ default_admin.password }}"
+#     api_host: "{{ node_name }}"
+#     state: stopped
+#   with_items: "{{ pve_hosts }}"
+
+# - name: Remove containers
+#   tags: ["vm"]
+#   community.general.proxmox:
+#     vmid: "{{ item.vmid }}"
+#     api_user: "{{ default_admin.name }}"
+#     api_password: "{{ default_admin.password }}"
+#     api_host: "{{ node_name }}"
+#     state: absent
+#   with_items: "{{ pve_hosts }}"
+
+- name: Create the containers
   tags: ["vm"]
   community.general.proxmox:
-    vmid: 201
-    api_user: "{{ username }}@{{ pve_node }}"
-    api_password: "{{ vault_pve_user_password }}"
-    api_host: "{{ pve_node }}"
+    vmid: "{{ item.vmid }}"
+    proxmox_default_behavior: no_defaults
+    # Size of the disk in GB
+    disk: "{{ item.disk|default(8) }}"
+    cores: "{{ item.cores|default(1) }}"
+    cpus: "{{ item.cpus|default(1) }}"
+    memory: "{{ item.memory|default(512) }}"
+    onboot: "{{ item.onboot|default('yes') }}"
+    swap: "{{ item.swap|default(0) }}"
+    node: "{{ node_name }}"
+    api_user: "{{ default_admin.name }}"
+    api_password: "{{ default_admin.password }}"
+    api_host: "{{ node_name }}"
+    password: "{{ pve_host_password }}"
+    storage: "{{ pve_host_storage }}"
+    hostname: "{{ item.hostname }}"
+    ostemplate: "{{ item.template }}"
+  with_items: "{{ pve_hosts }}"
+
+- name: Start containers
+  tags: ["vm"]
+  community.general.proxmox:
+    vmid: "{{ item.vmid }}"
+    api_user: "{{ default_admin.name }}"
+    api_password: "{{ default_admin.password }}"
+    api_host: "{{ node_name }}"
     state: started
+  with_items: "{{ pve_hosts }}"
