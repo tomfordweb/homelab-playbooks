@@ -3,14 +3,12 @@
 - name: "Create the 'pve_admins' groups"
   tags: ["auth"]
   with_items: "{{ pve_admins }}"
-  no_log: true
   proxmox_group:
     name: "{{ item.group }}"
 
 - name: "Create the 'pve_admins' users"
   tags: ["auth"]
   with_items: "{{ pve_admins }}"
-  no_log: true
   proxmox_user:
     name: "{{ item.name }}"
     password: "{{ item.password }}"
@@ -20,7 +18,6 @@
 - name: "Create the 'pve_admins' roles"
   tags: ["auth"]
   with_items: "{{ pve_admins }}"
-  no_log: true
   proxmox_acl:
     path: "{{ item.acl.path }}"
     roles: "{{ item.acl.roles }}"

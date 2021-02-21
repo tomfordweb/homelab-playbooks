@@ -3,7 +3,15 @@
   become: false
   gather_facts: true
   hosts: pve
+  tasks:
+    - name: Update and upgrade apt packages
+      become: true
+      apt:
+        update_cache: yes
+        upgrade: "yes"
+
   roles:
     - role: pve-ansible-base
     - role: pve-users
     - role: pve-node
+      tags: ["node-config"]

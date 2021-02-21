@@ -22,6 +22,8 @@ Your terminal will spit out some yaml that you can now include in any variable y
 
 If you need to update the template list, pass this argument on build
 
+Please note: This will destroy and recreate the containers...things such as IP addresses assigned by DHCP may change.
+
 ```
 docker-compose run ansible homelab.yml --extra-vars "update_templates=yes"
 ```

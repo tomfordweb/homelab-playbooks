@@ -1,4 +1,6 @@
 *.swo
 *.swp
 .vault_password
+.env
+.public_ssh_key
 node_modules

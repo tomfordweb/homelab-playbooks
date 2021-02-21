@@ -8,13 +8,7 @@ node_name: pve
 # A list of all of the admins on every host in this inventory
 pve_admins:
   - name: midas@pve
-    password: !vault |
-      $ANSIBLE_VAULT;1.1;AES256
-      39386533303339366434613935396432323732373136383365343362656434666439366161636262
-      3162393635376234616234623633333134363337373938300a623666656233646331353963613136
-      38633232373537363662306562633736396130656137663137383866393737303763353136616661
-      3639616463396461660a643030393937623333356133376638333361623437653664306536313464
-      6235
+    password: "{{ lookup('env', 'PVE_ADMIN_USER_PASSWORD') }}"
 
     acl:
       path: "/"
@@ -22,40 +16,70 @@ pve_admins:
     group: admin
 # The administrator that we will be running tasks as
 default_admin: "{{ pve_admins[0] }}"
+# Necessary when creating containers where modifing features
+pve_root:
+  name: root@pam
+  password: "{{ lookup('env', 'PVE_ROOT_PASSWORD') }}"
 
-pve_host_password: !vault |
-  $ANSIBLE_VAULT;1.1;AES256
-  37366265393733633532356261343730636133316236333430303665336664326538323434646264
-  3264613961613762646266653939613961303830353237630a343233663364636139383764653937
-  64393063343665333735666364616463646535393638343830626538323962333262613036616233
-  6334366664636437650a333936663933626336616130326561376566626466333163613131336536
-  3036
+# Shared password for lxc containers
+pve_host_password: "{{ lookup('env', 'PVE_CONTAINER_PASSWORD') }}"
 
 pve_host_storage: pve-vms
 pve_host_default_template: "local:vztmpl/ubuntu-20.10-standard_20.10-1_amd64.tar.gz"
+pve_host_default_lxc_netif: '{"net0":"name=eth0,ip=dhcp,ip6=dhcp,bridge=vmbr0"}'
+pve_host_ssh_pubkey: "{{ lookup('file', '.public_ssh_key') }}"
 
+# https://discuss.linuxcontainers.org/t/working-install-of-docker-ce-in-lxc-unprivileged-container-in-proxmox/3828
+dind_features:
 ####################
 # Host Definitions #
 ####################
 pve_hosts:
   # Docker Swarm
+  # Since these run in LXC containers, they must be created as root
+  # This is because only root@pam can adjust the features of a container.
+  # In order to run containers in containers, you must allow nesting and keyctl
   - hostname: swarm-manager-01
     vmid: "201"
     template: "{{ pve_host_default_template }}"
     memory: "2048"
     proxmox_default_behavior: compatibility
+    netif: "{{ pve_host_default_lxc_netif }}"
+    ssh_key: "{{ pve_host_ssh_pubkey }}docker: Error response from daemon: AppArmor enabled on system but the docker-default profile could not be loaded"
+    unprivileged: yes
+    auth: "{{ pve_root }}"
+    container_password: "{{ pve_host_password }}"
+    features:
+      - nesting=1
+      - keyctl=1
 
   - hostname: swarm-node-01-01
     memory: "2048"
     vmid: "202"
     template: "{{ pve_host_default_template }}"
     proxmox_default_behavior: compatibility
+    netif: "{{ pve_host_default_lxc_netif }}"
+    ssh_key: "{{ pve_host_ssh_pubkey }}"
+    container_password: "{{ pve_host_password }}"
+    auth: "{{ pve_root }}"
+    unprivileged: yes
+    features:
+      - nesting=1
+      - keyctl=1
 
   - hostname: swarm-node-01-02
     vmid: "203"
     memory: "2048"
     template: "{{ pve_host_default_template }}"
     proxmox_default_behavior: compatibility
+    netif: "{{ pve_host_default_lxc_netif }}"
+    ssh_key: "{{ pve_host_ssh_pubkey }}"
+    container_password: "{{ pve_host_password }}"
+    auth: "{{ pve_root }}"
+    unprivileged: yes
+    features:
+      - nesting=1
+      - keyctl=1
 
 ########################
 # Template Definitions #

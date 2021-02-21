@@ -7,7 +7,16 @@ services:
     entrypoint: ["ansible-playbook", "--vault-password-file", ".vault_password"]
     volumes:
       - ./:/ansible
-      - /home/tom/.vault_password:/ansible/.vault_password:ro
+      - /home/$USER/.ssh/id_rsa.pub:/ansible/.public_ssh_key:ro
+      - /home/$USER/.vault_password:/ansible/.vault_password:ro
       - $SSH_AUTH_SOCK:/ssh-agent
+    extra_hosts:
+      - homelab:${HOMELAB_IP?Missing required homelab IP}
+      - swarm-manager-01:${SWARM_MANAGER_01_IP?Missing required swarm-manager-01 IP}
+      - swarm-node-01-01:${SWARM_NODE_01_01_IP?Missing required swarm-node-01-01 IP}
+      - swarm-node-01-02:${SWARM_NODE_01_02_IP?Missing required swarm-node-01-02 IP}
     environment:
       SSH_AUTH_SOCK: /ssh-agent
+      PVE_ADMIN_USER_PASSWORD: ${PVE_ADMIN_USER_PASSWORD?Required Value}
+      PVE_CONTAINER_PASSWORD: ${PVE_CONTAINER_PASSWORD?Required Value}
+      PVE_ROOT_PASSWORD: ${PVE_ROOT_PASSWORD?Required Value}
