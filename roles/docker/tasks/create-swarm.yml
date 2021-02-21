@@ -16,20 +16,20 @@
     state: present
   register: swarm_info
 
+# For every swarm manager, register a swarm_join_token fact
 - name: Register the join token
   when: inventory_hostname in groups['swarmmanagers']
   set_fact:
     swarm_join_token: "{{ swarm_info.swarm_facts.JoinTokens.Manager }}"
 
-# TODO: How to loop this so the hostname isnt hardcoded
-- debug:
-    msg: "{{ hostvars['swarm-manager-01']['swarm_join_token'] }}"
-
+# For every docker node, look at the swarm manager variable for each host
+# And access the fact we set above
 - name: Add nodes
   when: inventory_hostname in groups['swarmnodes']
   community.docker.docker_swarm:
     state: join
-    # advertise_addr: 192.168.1.2
-    join_token: "{{ hostvars['swarm-manager-01']['swarm_join_token'] }}"
+    join_token: "{{ hostvars[ hostvars[inventory_hostname]['manager']]['swarm_join_token'] }}"
     remote_addrs:
-      ["{{ hostvars['swarm-manager-01']['ansible_default_ipv4']['address'] }}"]
+      [
+        "{{ hostvars[ hostvars[inventory_hostname]['manager']]['ansible_default_ipv4']['address'] }}",
+      ]

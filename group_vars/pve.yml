@@ -80,6 +80,45 @@ pve_hosts:
     features:
       - nesting=1
       - keyctl=1
+  - hostname: swarm-node-01-03
+    vmid: "204"
+    memory: "2048"
+    template: "{{ pve_host_default_template }}"
+    proxmox_default_behavior: compatibility
+    netif: "{{ pve_host_default_lxc_netif }}"
+    ssh_key: "{{ pve_host_ssh_pubkey }}"
+    container_password: "{{ pve_host_password }}"
+    auth: "{{ pve_root }}"
+    unprivileged: yes
+    features:
+      - nesting=1
+      - keyctl=1
+  - hostname: swarm-node-01-04
+    vmid: "205"
+    memory: "2048"
+    template: "{{ pve_host_default_template }}"
+    proxmox_default_behavior: compatibility
+    netif: "{{ pve_host_default_lxc_netif }}"
+    ssh_key: "{{ pve_host_ssh_pubkey }}"
+    container_password: "{{ pve_host_password }}"
+    auth: "{{ pve_root }}"
+    unprivileged: yes
+    features:
+      - nesting=1
+      - keyctl=1
+  - hostname: swarm-node-01-05
+    vmid: "207"
+    memory: "2048"
+    template: "{{ pve_host_default_template }}"
+    proxmox_default_behavior: compatibility
+    netif: "{{ pve_host_default_lxc_netif }}"
+    ssh_key: "{{ pve_host_ssh_pubkey }}"
+    container_password: "{{ pve_host_password }}"
+    auth: "{{ pve_root }}"
+    unprivileged: yes
+    features:
+      - nesting=1
+      - keyctl=1
 
 ########################
 # Template Definitions #

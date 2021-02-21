@@ -15,7 +15,6 @@
   when: is_installed.rc == 1
 
 - name: Update and upgrade apt packages
-  when: is_installed.rc == 0
   apt:
     update_cache: yes
     upgrade: "yes"
@@ -30,7 +29,7 @@
       - gnupg-agent
       - software-properties-common
   tags: ["packages"]
-  when: is_installed.rc == 0
+  # when: is_installed.rc == 0
 
 - name: Add docker official GPG key
   become_user: root
@@ -38,13 +37,13 @@
     url: https://download.docker.com/linux/ubuntu/gpg
     state: present
   tags: ["packages"]
-  when: is_installed.rc == 0
+  # when: is_installed.rc == 0
 
 - name: Add the docker repository
   apt_repository:
     repo: deb https://download.docker.com/linux/ubuntu {{ ansible_facts.distribution_release }} stable
   tags: ["packages"]
-  when: is_installed.rc == 0
+  # when: is_installed.rc == 0
 
 - name: Update apt cache and install docker
   apt:
@@ -55,6 +54,6 @@
       - docker-ce-cli
       - containerd.io
   tags: ["packages"]
-  when: is_installed.rc == 0
+  # when: is_installed.rc == 0
 
 - import_tasks: create-swarm.yml

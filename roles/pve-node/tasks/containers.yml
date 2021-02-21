@@ -90,4 +90,3 @@
     api_host: "{{ node_name }}"
     state: started
   with_items: "{{ pve_hosts }}"
-  when: update_templates

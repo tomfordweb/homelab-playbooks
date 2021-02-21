@@ -6,5 +6,8 @@ swarm-manager-01
 
 
 [swarmnodes]
-swarm-node-01-01
-swarm-node-01-02
+swarm-node-01-01    manager=swarm-manager-01
+swarm-node-01-02    manager=swarm-manager-01
+swarm-node-01-03    manager=swarm-manager-01
+swarm-node-01-04    manager=swarm-manager-01
+swarm-node-01-05    manager=swarm-manager-01
