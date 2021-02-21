@@ -5,4 +5,4 @@
     - swarm-managers
 
   roles:
-    - role: docker-base
+    - role: docker

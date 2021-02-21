@@ -5,4 +5,4 @@
     - swarm-nodes
 
   roles:
-    - role: docker-base
+    - role: docker

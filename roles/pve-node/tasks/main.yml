@@ -1,93 +1,15 @@
 ---
-- name: Update PVE template list
-  tags: ["template"]
-  command: pveam update
-  when: update_templates
+# tasks file for roles/pve-ansible-base
+- name: install pip3
+  apt:
+    name:
+      - python3-pip
 
-- name: Find available templates
-  tags: ["template"]
-  shell: pveam available | awk '{print $2}'
-  changed_when: false
-  register: __all_templates
-  when: update_templates
+- name: install dependencies for community.general.proxmox
+  pip:
+    name:
+      - proxmoxer
+      - requests
 
-- name: Filter templates against available
-  tags: ["template"]
-  set_fact:
-    __template_list: "{{ __template_list|default([]) + __all_templates.stdout_lines|select('search', item)|sort }}"
-  with_items: "{{ lxc_templates }}"
-  when: update_templates
-
-- name: Download available templates
-  when: update_templates
-  shell: |
-    pveam download {{ lxc_template_storage_location|default('local') }} {{ item }}
-    creates={{ lxc_template_directory }}/{{ item }}
-  with_items: "{{ __template_list }}"
-
-- name: Stop containers for recreate
-  tags: ["vm"]
-  community.general.proxmox:
-    vmid: "{{ item.vmid }}"
-    api_user: "{{ default_admin.name }}"
-    proxmox_default_behavior: no_defaults
-    api_password: "{{ default_admin.password }}"
-    api_host: "{{ node_name }}"
-    state: stopped
-  with_items: "{{ pve_hosts }}"
-  when: update_templates
-  ignore_errors: yes
-
-- name: Remove containers for recreate
-  tags: ["vm"]
-  community.general.proxmox:
-    vmid: "{{ item.vmid }}"
-    api_user: "{{ default_admin.name }}"
-    proxmox_default_behavior: no_defaults
-    api_password: "{{ default_admin.password }}"
-    api_host: "{{ node_name }}"
-    state: absent
-  with_items: "{{ pve_hosts }}"
-  when: update_templates
-  ignore_errors: yes
-
-- name: Create the containers
-  tags: ["vm"]
-  community.general.proxmox:
-    # API Credentials
-    api_user: "{{ item.auth.name }}"
-    api_password: "{{ item.auth.password }}"
-    api_host: "{{ node_name }}"
-    # Node configuration
-    vmid: "{{ item.vmid }}"
-    node: "{{ node_name }}"
-    onboot: "{{ item.onboot|default('yes') }}"
-    proxmox_default_behavior: no_defaults
-    ostemplate: "{{ item.template }}"
-    features: "{{ item.features|default([]) }}"
-    unprivileged: "{{ item.unprivileged|default('no') }}"
-    # Resource allocation
-    disk: "{{ item.disk|default(8) }}"
-    cores: "{{ item.cores|default(1) }}"
-    cpus: "{{ item.cpus|default(1) }}"
-    memory: "{{ item.memory|default(512) }}"
-    storage: "{{ pve_host_storage }}"
-    swap: "{{ item.swap|default(0) }}"
-    # Network configuration
-    hostname: "{{ item.hostname }}"
-    netif: "{{ item.netif|default({}) }}"
-    # Setup Authentication with container
-    password: "{{ item.container_password }}"
-    pubkey: "{{ item.ssh_key }}"
-  with_items: "{{ pve_hosts }}"
-
-- name: Start newly created containers
-  tags: ["vm"]
-  community.general.proxmox:
-    vmid: "{{ item.vmid }}"
-    api_user: "{{ default_admin.name }}"
-    api_password: "{{ default_admin.password }}"
-    api_host: "{{ node_name }}"
-    state: started
-  with_items: "{{ pve_hosts }}"
-  when: update_templates
+- import_tasks: users.yml
+- import_tasks: containers.yml

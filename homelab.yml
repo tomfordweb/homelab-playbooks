@@ -11,7 +11,4 @@
         upgrade: "yes"
 
   roles:
-    - role: pve-ansible-base
-    - role: pve-users
     - role: pve-node
-      tags: ["node-config"]
