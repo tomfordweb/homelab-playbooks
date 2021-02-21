@@ -80,7 +80,6 @@
     password: "{{ item.container_password }}"
     pubkey: "{{ item.ssh_key }}"
   with_items: "{{ pve_hosts }}"
-  when: update_templates
 
 - name: Start newly created containers
   tags: ["vm"]
