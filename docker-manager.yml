@@ -1,0 +1,8 @@
+---
+- become: no
+  gather_facts: true
+  hosts:
+    - swarm-managers
+
+  roles:
+    - role: docker-base
