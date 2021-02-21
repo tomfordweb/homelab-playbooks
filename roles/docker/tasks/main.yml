@@ -1,6 +1,5 @@
 ---
-# tasks file for roles/docker-base
-
+# Install and configure docker for the machine
 - name: Check if docker is installed
   shell: dpkg-query -W -f='${Status}' docker | grep 'install ok installed'
   register: is_installed
@@ -57,3 +56,5 @@
       - containerd.io
   tags: ["packages"]
   when: is_installed.rc == 0
+
+- import_tasks: create-swarm.yml

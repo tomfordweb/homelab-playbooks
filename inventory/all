@@ -1,10 +1,10 @@
 [pve]
 homelab
 
-[swarm-managers]
+[swarmmanagers]
 swarm-manager-01
 
 
-[swarm-nodes]
+[swarmnodes]
 swarm-node-01-01
 swarm-node-01-02
