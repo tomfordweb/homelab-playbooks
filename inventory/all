@@ -2,12 +2,19 @@
 homelab
 
 [swarmmanagers]
-swarm-manager-01
-
+192.168.1.138
+192.168.1.159
+192.168.1.183
 
 [swarmnodes]
-swarm-node-01-01    manager=swarm-manager-01
-swarm-node-01-02    manager=swarm-manager-01
-swarm-node-01-03    manager=swarm-manager-01
-swarm-node-01-04    manager=swarm-manager-01
-swarm-node-01-05    manager=swarm-manager-01
+192.168.1.184   manager=192.168.1.138
+192.168.1.113   manager=192.168.1.138
+192.168.1.103   manager=192.168.1.138
+192.168.1.133   manager=192.168.1.138
+192.168.1.112   manager=192.168.1.138
+192.168.1.101   manager=192.168.1.159
+192.168.1.104   manager=192.168.1.159
+192.168.1.169   manager=192.168.1.183
+192.168.1.100   manager=192.168.1.183
+192.168.1.185   manager=192.168.1.183
+

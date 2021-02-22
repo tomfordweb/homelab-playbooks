@@ -12,12 +12,6 @@ services:
       - $SSH_AUTH_SOCK:/ssh-agent
     extra_hosts:
       - homelab:${HOMELAB_IP?Missing required homelab IP}
-      - swarm-manager-01:${SWARM_MANAGER_01_IP?Missing required swarm-manager-01 IP}
-      - swarm-node-01-01:${SWARM_NODE_01_01_IP?Missing required swarm-node-01-01 IP}
-      - swarm-node-01-02:${SWARM_NODE_01_02_IP?Missing required swarm-node-01-02 IP}
-      - swarm-node-01-03:${SWARM_NODE_01_03_IP?Missing required swarm-node-01-02 IP}
-      - swarm-node-01-04:${SWARM_NODE_01_04_IP?Missing required swarm-node-01-02 IP}
-      - swarm-node-01-05:${SWARM_NODE_01_05_IP?Missing required swarm-node-01-02 IP}
     environment:
       SSH_AUTH_SOCK: /ssh-agent
       PVE_ADMIN_USER_PASSWORD: ${PVE_ADMIN_USER_PASSWORD?Required Value}
