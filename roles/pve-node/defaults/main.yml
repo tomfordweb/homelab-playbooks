@@ -2,3 +2,39 @@
 # If you would like to update your template, you can define this to
 # be a truthy value
 update_templates: no
+
+########################
+# Template Definitions #
+########################
+# The name of the pve disk to store templates on
+lxc_template_storage_location: local
+lxc_template_directory: /
+# Regex for the templates to download
+lxc_templates:
+  - "ubuntu-20.[0-9]+-standard"
+  - "debian-10-turnkey-mysql_16.[0-9]"
+
+lxc_defaults:
+  node: "{{ node_name }}"
+  api_host: "{{ node_name }}"
+  storage: "{{ vm_storage_name }}"
+  onboot: yes
+  memory: "2048"
+  disk: "8"
+  cores: "1"
+  cpus: "1"
+  swap: "0"
+  template: local:vztmpl/ubuntu-20.10-standard_20.10-1_amd64.tar.gz
+  proxmox_default_behavior: no_defaults
+  netif: '{"net0":"name=eth0,ip=dhcp,ip6=dhcp,bridge=vmbr0"}'
+  ssh_key: "{{ lookup('file', '.public_ssh_key') }}"
+  container_password: "{{ lookup('env', 'PVE_CONTAINER_PASSWORD') }}"
+  auth:
+    name: root@pam
+    password: "{{ lookup('env', 'PVE_ROOT_PASSWORD') }}"
+  unprivileged: yes
+
+  # https://discuss.linuxcontainers.org/t/working-install-of-docker-ce-in-lxc-unprivileged-container-in-proxmox/3828
+  features:
+    - nesting=1
+    - keyctl=1

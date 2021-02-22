@@ -29,10 +29,10 @@
   tags: ["vm"]
   community.general.proxmox:
     vmid: "{{ item.vmid }}"
-    api_user: "{{ default_admin.name }}"
-    proxmox_default_behavior: no_defaults
-    api_password: "{{ default_admin.password }}"
-    api_host: "{{ node_name }}"
+    api_host: "{{ item.api_host|default(lxc_defaults.api_host) }}"
+    password: "{{ item.container_password|default(lxc_defaults.container_password) }}"
+    api_user: "{{ item.auth.name|default(lxc_defaults.auth.name) }}"
+    proxmox_default_behavior: "{{ item.proxmox_default_behavior|default(lxc_defaults.proxmox_default_behavior) }}"
     state: stopped
   with_items: "{{ pve_hosts }}"
   when: update_templates
@@ -42,10 +42,10 @@
   tags: ["vm"]
   community.general.proxmox:
     vmid: "{{ item.vmid }}"
-    api_user: "{{ default_admin.name }}"
-    proxmox_default_behavior: no_defaults
-    api_password: "{{ default_admin.password }}"
-    api_host: "{{ node_name }}"
+    api_host: "{{ item.api_host|default(lxc_defaults.api_host) }}"
+    password: "{{ item.container_password|default(lxc_defaults.container_password) }}"
+    api_user: "{{ item.auth.name|default(lxc_defaults.auth.name) }}"
+    proxmox_default_behavior: "{{ item.proxmox_default_behavior|default(lxc_defaults.proxmox_default_behavior) }}"
     state: absent
   with_items: "{{ pve_hosts }}"
   when: update_templates
@@ -54,39 +54,40 @@
 - name: Create the containers
   tags: ["vm"]
   community.general.proxmox:
-    # API Credentials
-    api_user: "{{ item.auth.name }}"
-    api_password: "{{ item.auth.password }}"
-    api_host: "{{ node_name }}"
-    # Node configuration
+    # Required values
     vmid: "{{ item.vmid }}"
-    node: "{{ node_name }}"
-    onboot: "{{ item.onboot|default('yes') }}"
-    proxmox_default_behavior: no_defaults
-    ostemplate: "{{ item.template }}"
-    features: "{{ item.features|default([]) }}"
-    unprivileged: "{{ item.unprivileged|default('no') }}"
-    # Resource allocation
-    disk: "{{ item.disk|default(8) }}"
-    cores: "{{ item.cores|default(1) }}"
-    cpus: "{{ item.cpus|default(1) }}"
-    memory: "{{ item.memory|default(512) }}"
-    storage: "{{ pve_host_storage }}"
-    swap: "{{ item.swap|default(0) }}"
-    # Network configuration
     hostname: "{{ item.hostname }}"
-    netif: "{{ item.netif|default({}) }}"
-    # Setup Authentication with container
-    password: "{{ item.container_password }}"
-    pubkey: "{{ item.ssh_key }}"
+    # Optional values, defaults to something sensible
+    node: "{{ item.node_name|default(lxc_defaults.node) }}"
+    api_host: "{{ item.api_host|default(lxc_defaults.api_host) }}"
+    password: "{{ item.container_password|default(lxc_defaults.container_password) }}"
+    api_user: "{{ item.auth.name|default(lxc_defaults.auth.name) }}"
+    api_password: "{{ item.auth.password|default(lxc_defaults.auth.password) }}"
+    onboot: "{{ item.onboot|default(lxc_defaults.onboot) }}"
+    proxmox_default_behavior: "{{ item.proxmox_default_behavior|default(lxc_defaults.proxmox_default_behavior) }}"
+    ostemplate: "{{ item.template|default(lxc_defaults.template) }}"
+    features: "{{ item.features|default(lxc_defaults.features) }}"
+    unprivileged: "{{ item.unprivileged|default(lxc_defaults.unprivileged) }}"
+    disk: "{{ item.disk|default(lxc_defaults.disk) }}"
+    cores: "{{ item.cores|default(lxc_defaults.cores) }}"
+    cpus: "{{ item.cpus|default(lxc_defaults.cpus) }}"
+    memory: "{{ item.memory|default(lxc_defaults.memory) }}"
+    storage: "{{ item.storage|default(lxc_defaults.storage) }}"
+    swap: "{{ item.swap|default(lxc_defaults.swap) }}"
+    netif: "{{ item.netif|default(lxc_defaults.netif) }}"
+    pubkey: "{{ item.ssh_key|default(lxc_defaults.ssh_key) }}"
   with_items: "{{ pve_hosts }}"
 
 - name: Start newly created containers
   tags: ["vm"]
   community.general.proxmox:
     vmid: "{{ item.vmid }}"
-    api_user: "{{ default_admin.name }}"
-    api_password: "{{ default_admin.password }}"
-    api_host: "{{ node_name }}"
+    api_host: "{{ item.api_host|default(lxc_defaults.api_host) }}"
+    api_user: "{{ item.auth.name|default(lxc_defaults.auth.name) }}"
+    api_password: "{{ item.auth.password|default(lxc_defaults.auth.password) }}"
+    proxmox_default_behavior: "{{ item.proxmox_default_behavior|default(lxc_defaults.proxmox_default_behavior) }}"
     state: started
   with_items: "{{ pve_hosts }}"
+
+- import_tasks: get-container-private-ips.yml
+  tags: ["debug"]

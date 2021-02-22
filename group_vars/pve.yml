@@ -17,20 +17,11 @@ pve_admins:
 # The administrator that we will be running tasks as
 default_admin: "{{ pve_admins[0] }}"
 # Necessary when creating containers where modifing features
-pve_root:
-  name: root@pam
-  password: "{{ lookup('env', 'PVE_ROOT_PASSWORD') }}"
 
-# Shared password for lxc containers
-pve_host_password: "{{ lookup('env', 'PVE_CONTAINER_PASSWORD') }}"
+# Shared password for lxc containers:w
 
-pve_host_storage: pve-vms
-pve_host_default_template: "local:vztmpl/ubuntu-20.10-standard_20.10-1_amd64.tar.gz"
-pve_host_default_lxc_netif: '{"net0":"name=eth0,ip=dhcp,ip6=dhcp,bridge=vmbr0"}'
-pve_host_ssh_pubkey: "{{ lookup('file', '.public_ssh_key') }}"
+vm_storage_name: pve-vms
 
-# https://discuss.linuxcontainers.org/t/working-install-of-docker-ce-in-lxc-unprivileged-container-in-proxmox/3828
-dind_features:
 ####################
 # Host Definitions #
 ####################
@@ -41,92 +32,18 @@ pve_hosts:
   # In order to run containers in containers, you must allow nesting and keyctl
   - hostname: swarm-manager-01
     vmid: "201"
-    template: "{{ pve_host_default_template }}"
-    memory: "2048"
-    proxmox_default_behavior: compatibility
-    netif: "{{ pve_host_default_lxc_netif }}"
-    ssh_key: "{{ pve_host_ssh_pubkey }}docker: Error response from daemon: AppArmor enabled on system but the docker-default profile could not be loaded"
-    unprivileged: yes
-    auth: "{{ pve_root }}"
-    container_password: "{{ pve_host_password }}"
-    features:
-      - nesting=1
-      - keyctl=1
 
   - hostname: swarm-node-01-01
-    memory: "2048"
     vmid: "202"
-    template: "{{ pve_host_default_template }}"
-    proxmox_default_behavior: compatibility
-    netif: "{{ pve_host_default_lxc_netif }}"
-    ssh_key: "{{ pve_host_ssh_pubkey }}"
-    container_password: "{{ pve_host_password }}"
-    auth: "{{ pve_root }}"
-    unprivileged: yes
-    features:
-      - nesting=1
-      - keyctl=1
 
   - hostname: swarm-node-01-02
     vmid: "203"
-    memory: "2048"
-    template: "{{ pve_host_default_template }}"
-    proxmox_default_behavior: compatibility
-    netif: "{{ pve_host_default_lxc_netif }}"
-    ssh_key: "{{ pve_host_ssh_pubkey }}"
-    container_password: "{{ pve_host_password }}"
-    auth: "{{ pve_root }}"
-    unprivileged: yes
-    features:
-      - nesting=1
-      - keyctl=1
+
   - hostname: swarm-node-01-03
     vmid: "204"
-    memory: "2048"
-    template: "{{ pve_host_default_template }}"
-    proxmox_default_behavior: compatibility
-    netif: "{{ pve_host_default_lxc_netif }}"
-    ssh_key: "{{ pve_host_ssh_pubkey }}"
-    container_password: "{{ pve_host_password }}"
-    auth: "{{ pve_root }}"
-    unprivileged: yes
-    features:
-      - nesting=1
-      - keyctl=1
+
   - hostname: swarm-node-01-04
     vmid: "205"
-    memory: "2048"
-    template: "{{ pve_host_default_template }}"
-    proxmox_default_behavior: compatibility
-    netif: "{{ pve_host_default_lxc_netif }}"
-    ssh_key: "{{ pve_host_ssh_pubkey }}"
-    container_password: "{{ pve_host_password }}"
-    auth: "{{ pve_root }}"
-    unprivileged: yes
-    features:
-      - nesting=1
-      - keyctl=1
+
   - hostname: swarm-node-01-05
     vmid: "207"
-    memory: "2048"
-    template: "{{ pve_host_default_template }}"
-    proxmox_default_behavior: compatibility
-    netif: "{{ pve_host_default_lxc_netif }}"
-    ssh_key: "{{ pve_host_ssh_pubkey }}"
-    container_password: "{{ pve_host_password }}"
-    auth: "{{ pve_root }}"
-    unprivileged: yes
-    features:
-      - nesting=1
-      - keyctl=1
-
-########################
-# Template Definitions #
-########################
-# The name of the pve disk to store templates on
-lxc_template_storage_location: local
-lxc_template_directory: /
-# Regex for the templates to download
-lxc_templates:
-  - "ubuntu-20.[0-9]+-standard"
-  - "debian-10-turnkey-mysql_16.[0-9]"

@@ -1,0 +1,13 @@
+---
+- name: Get the private IP on the container
+  shell: "pct exec {{ item.vmid }} -- hostname -I | awk '{print $1}'"
+  with_items: "{{ pve_hosts }}"
+  register: __host_private_ip
+  changed_when: False
+
+- name: Get private IP of each container that is active
+  debug:
+    msg: "{{ item.stdout }}"
+  with_items: "{{ __host_private_ip.results }}"
+  loop_control:
+    label: "{{ item.item.hostname }} - {{ item.item.vmid }}"
