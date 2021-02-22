@@ -57,7 +57,8 @@ pve_hosts:
 
   - hostname: swarm-node-02-02
     vmid: "210"
-
+  - hostname: swarm-node-02-03
+    vmid: "215"
   # Docker Swarm 3
   - hostname: swarm-manager-03
     vmid: "211"
