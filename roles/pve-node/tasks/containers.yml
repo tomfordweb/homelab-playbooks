@@ -51,6 +51,38 @@
   when: update_templates
   ignore_errors: yes
 
+- name: Get a list of all a containers
+  tags: ["cleanup"]
+  shell: "pct list | awk '{print $1}'"
+  changed_when: false
+  register: __unused_pve_containers
+
+- name: Stop unused containers for removal
+  tags: ["cleanup"]
+  community.general.proxmox:
+    vmid: "{{ item | int }}"
+    api_host: "{{ lxc_defaults.api_host }}"
+    api_password: "{{ lxc_defaults.auth.password }}"
+    api_user: "{{ lxc_defaults.auth.name }}"
+    proxmox_default_behavior: "no_defaults"
+    state: stopped
+  with_items: "{{ __unused_pve_containers.stdout_lines }}"
+  when: "item not in pve_hosts|map(attribute='vmid')"
+  ignore_errors: yes
+
+- name: Remove unsused containers
+  tags: ["cleanup"]
+  community.general.proxmox:
+    vmid: "{{ item | int }}"
+    api_host: "{{ lxc_defaults.api_host }}"
+    api_password: "{{ lxc_defaults.auth.password }}"
+    api_user: "{{ lxc_defaults.auth.name }}"
+    proxmox_default_behavior: "{{ lxc_defaults.proxmox_default_behavior }}"
+    state: absent
+  with_items: "{{ __unused_pve_containers.stdout_lines }}"
+  when: "item not in pve_hosts|map(attribute='vmid')"
+  ignore_errors: yes
+
 - name: Create the containers
   tags: ["vm"]
   community.general.proxmox:
