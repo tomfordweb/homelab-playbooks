@@ -11,7 +11,7 @@ services:
       - /home/$USER/.vault_password:/ansible/.vault_password:ro
       - $SSH_AUTH_SOCK:/ssh-agent
     extra_hosts:
-      - homelab:${HOMELAB_IP?Missing required homelab IP}
+      - homelab:${HOMELAB_IP?Required Value}
     environment:
       SSH_AUTH_SOCK: /ssh-agent
       PVE_ADMIN_USER_PASSWORD: ${PVE_ADMIN_USER_PASSWORD?Required Value}
