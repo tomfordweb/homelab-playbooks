@@ -1,3 +1,0 @@
----
-- import_playbook: docker-manager.yml
-- import_playbook: docker-node.yml

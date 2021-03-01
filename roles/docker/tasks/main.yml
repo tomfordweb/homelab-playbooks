@@ -1,19 +1,4 @@
 ---
-# Install and configure docker for the machine
-- name: Check if docker is installed
-  shell: dpkg-query -W -f='${Status}' docker | grep 'install ok installed'
-  register: is_installed
-  failed_when: no
-  changed_when: no
-
-- debug:
-    msg: docker is not installed!
-  when: is_installed.rc == 0
-
-- debug:
-    msg: docker is already installed!
-  when: is_installed.rc == 1
-
 - name: Update and upgrade apt packages
   apt:
     update_cache: yes

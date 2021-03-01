@@ -12,3 +12,5 @@
 
   roles:
     - role: pve-node
+
+- import_playbook: docker.yml

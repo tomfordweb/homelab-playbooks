@@ -31,19 +31,19 @@ pve_hosts:
   # This is because only root@pam can adjust the features of a container.
   # In order to run containers in containers, you must allow nesting and keyctl
   - hostname: swarm-manager-01
-    vmid: "201"
+    vmid: "301"
 
   - hostname: swarm-node-01-01
-    vmid: "202"
+    vmid: "302"
 
   - hostname: swarm-node-01-02
-    vmid: "203"
+    vmid: "303"
 
   - hostname: swarm-node-01-03
-    vmid: "204"
+    vmid: "304"
 
   - hostname: swarm-node-01-04
-    vmid: "205"
+    vmid: "305"
 
   - hostname: swarm-node-01-05
-    vmid: "207"
+    vmid: "307"

@@ -121,5 +121,3 @@
     state: started
   with_items: "{{ pve_hosts }}"
 
-- import_tasks: get-container-private-ips.yml
-  tags: ["debug"]

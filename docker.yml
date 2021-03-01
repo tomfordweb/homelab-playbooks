@@ -2,6 +2,7 @@
 - become: no
   gather_facts: true
   hosts:
+    - swarmmanagers
     - swarmnodes
 
   roles:

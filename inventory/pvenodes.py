@@ -32,7 +32,7 @@ def vm_response_factory(line):
         "ip": None
     }
 
-class ExampleInventory(object):
+class ProxmoxVmInventory(object):
 
     def __init__(self):
         self.inventory = {}
@@ -62,41 +62,48 @@ class ExampleInventory(object):
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh.connect(server, username=username, password=password)
         # Get a list of active vms
-        
         allContainersCommand  = exec_ssh_command(ssh, "pct list | grep 'running' | awk '{print $1, $3}'")
         allContainersOutput = allContainersCommand['stdout'].readlines()
-        allContainersOutput = list(map(vm_response_factory, allContainersOutput))
-        # allContainersOutput = allContainersOutput.splitlines()
+        all_containers = list(map(vm_response_factory, allContainersOutput))
 
-        hostIps = []
-        for host in allContainersOutput:
+        # This is a list of every VM with its IP address
+        for host in all_containers:
             command = f"pct exec {host['id']} -- hostname -I | awk '{{print $1}}'"
             hostIpCommand = exec_ssh_command(ssh, command)
             host['ip'] = hostIpCommand['stdout'].read().decode('utf-8').rstrip()
 
+        # extract swarm managers
+        swarm_manager_containers = [x for x in all_containers if x['hostname'].startswith('swarm-manager')]
+        swarm_node_containers = [x for x in all_containers if x['hostname'].startswith('swarm-node')]
 
-        print(list(allContainersOutput))
-        # return {
-        #     'group': {
-        #         'hosts': ['192.168.28.71', '192.168.28.72'],
-        #         'vars': {
-        #             'ansible_ssh_user': 'vagrant',
-        #             'ansible_ssh_private_key_file':
-        #                 '~/.vagrant.d/insecure_private_key',
-        #             'example_variable': 'value'
-        #         }
-        #     },
-        #     '_meta': {
-        #         'hostvars': {
-        #             '192.168.28.71': {
-        #                 'host_specific_var': 'foo'
-        #             },
-        #             '192.168.28.72': {
-        #                 'host_specific_var': 'bar'
-        #             }
-        #         }
-        #     }
-        # }
+        hostvars = {}
+        # For every swarm node, determine which manager it belongs to and set a custom
+        # host variable for that node. This will let us create a join token and join the appropriate
+        # swarm in the playbook
+        for host in swarm_node_containers:
+            node_swarm_manager_id = host['hostname'].split('-')[2]
+            swarm_manager = [x for x in swarm_manager_containers if x['hostname'].endswith(node_swarm_manager_id)][0]
+            hostvars[host['ip']] = {
+                    "manager": swarm_manager['ip']
+                }
+
+
+        return {
+            'swarmmanagers': {
+                'hosts': [host['ip'] for host in swarm_manager_containers],
+                'vars': {
+                }
+            },
+            'swarmnodes': {
+                'hosts': [host['ip'] for host in swarm_node_containers],
+                'vars': {
+                }
+            },
+            '_meta': {
+                'hostvars': hostvars
+
+            }
+        }
 
     # Empty inventory for testing.
     def empty_inventory(self):
@@ -110,4 +117,4 @@ class ExampleInventory(object):
         self.args = parser.parse_args()
 
 # Get the inventory.
-ExampleInventory()
+ProxmoxVmInventory()
