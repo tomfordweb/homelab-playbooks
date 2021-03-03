@@ -1,5 +1,15 @@
 Ansible playbooks to administer my proxmox ve cluster.
 
+# First Start
+
+Run the following commands
+
+```
+cp .env.example .env
+echo "yourVaultPassword" >> ~/.vault_password
+chmod 644 ~/.vault_password
+```
+
 # Playbooks
 
 ### `docker-compose run ansible -i inventory/all -i inventory/pvenodes.py main.yml`

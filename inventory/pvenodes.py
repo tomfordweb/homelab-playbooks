@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
 '''
-A dynamic inventory script that will open an SSH session to the
-pve node and get a list of all running containers.
+Returns the inventory for the pve cluster 
+formatted with variables using only hostname patterns.
 
-It will the returned a detailed inventory setting up any group variables needed.
+Allows the use of DCHP by allowing control machine to administer commands
+without knowing the IP beforehand
 '''
 
 import os
@@ -17,24 +18,10 @@ try:
 except ImportError:
     import simplejson as json
 
-def paramiko_connection(server, username, password):
-    ssh = paramiko.SSHClient()
-    ssh.load_system_host_keys()
-    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(server, username=username, password=password)
-    return ssh;
-
-def exec_ssh_command(paramikoClient, command):
-    stdin, stdout, stderr = paramikoClient.exec_command(command)
-
-    return {
-        "stdin": stdin,
-        "stdout": stdout,
-        "stderr": stderr
-    }
-
-
 class ProxmoxVmResponse():
+    '''
+    A representation of a nodes container/vm
+    '''
     def __init__(self, stdout_row):
         returnString = stdout_row.rstrip()
         split = returnString.split()
@@ -44,6 +31,10 @@ class ProxmoxVmResponse():
         self.ip = None
 
     def setIpAddress(self, paramiko_response):
+        '''
+        This response comes to us as a `byte` data type
+        format it as a string
+        '''
         self.ip = paramiko_response.get('stdout').read().decode('utf-8').rstrip()
 
 
@@ -55,13 +46,18 @@ class ProxmoxVmResponse():
         }
 
 class ProxmoxNodeInventory():
+    '''
+    A collection for the node responses
+    '''
     def __init__(self, items):
         self.container = items
 
-
     def getContainersByHostnameStartsWith(self, search):
-        return [x for x in self.container if x.hostname.startswith(search)]
-
+        items =  [x for x in self.container if x.hostname.startswith(search)]
+        return ProxmoxNodeInventory(items)
+    
+    def length(self):
+        return len(self.container)
 
     @staticmethod
     def createFromContainerResponse(paramiko_response):
@@ -74,87 +70,122 @@ class ProxmoxNodeInventory():
         return [node.toJson() for node in self.container]
 
 
-# TODO: Use objects, clean this logic up
-def generate_swarm_node_meta(swarm_manager_containers, swarm_node_containers):
-
-    hostvars = {}
-    # For every swarm node, determine which manager it belongs to and set a custom
-    # host variable for that node. This will let us create a join token and join the appropriate
-    # swarm in the playbook
-    for host in swarm_node_containers:
-        node_swarm_manager_id = host.hostname.split('-')[2]
-        swarm_manager = [x for x in swarm_manager_containers if x.hostname.endswith(node_swarm_manager_id)][0]
-        hostvars[host.ip] = {
-            "manager": swarm_manager.ip
+    
+class PveVmHostVars():
+    def __init__(self):
+        self.container = {}
+    
+    def addItem(self, key, vars: dict):
+        item = {
+            key : vars
         }
+        self.container.update(item)
 
-    return hostvars
+    @staticmethod
+    def create(inventory: ProxmoxNodeInventory):
+        hostvars = PveVmHostVars()
+
+        swarm_manager_containers = inventory.getContainersByHostnameStartsWith('swarm-manager')
+        swarm_node_containers = inventory.getContainersByHostnameStartsWith('swarm-node')
+
+        if(swarm_manager_containers.length() > 0 and swarm_node_containers.length() > 0):
+            for host in swarm_node_containers.container:
+                # Node hostnames must be this format node-01-03
+                # Where 01 is the swarm manager id "swam-manager-01"
+                # And 03 is the unique node id in relation to the manager
+                node_swarm_manager_id = host.hostname.split('-')[2]
+                swarm_manager = [x for x in swarm_manager_containers.container if x.hostname.endswith(node_swarm_manager_id)][0]
+                hostvars.addItem(host.ip, { "manager": swarm_manager.ip})
+
+        return hostvars
+         
+    def toJson(self):
+        return self.container
 
 
-
-class ProxmoxVmInventory(object):
-
+class DynamicProxmoxInventory(object):
+    '''
+    Args: 
+    --list      Returns a list of all inventory items
+    --host      Returns a specific hostname
+    '''
     def __init__(self):
         self.inventory = {}
         self.read_cli_args()
 
-        # Called with `--list`.
         if self.args.list:
             self.inventory = self.example_inventory()
-        # Called with `--host [hostname]`.
         elif self.args.host:
             # Not implemented, since we return _meta info `--list`.
             self.inventory = self.empty_inventory()
-        # If no groups or vars are present, return an empty inventory.
         else:
             self.inventory = self.empty_inventory()
 
-        print(json.dumps(self.inventory))
+        print(json.dumps(self.inventory, indent=2))
 
 
-    # Example inventory for testing.
+    def paramiko_connection(self, server, username, password):
+        ''' 
+        Returns a paramiko ssh client
+        '''
+        ssh = paramiko.SSHClient()
+        ssh.load_system_host_keys()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(server, username=username, password=password)
+        return ssh
+
+    def exec_ssh_command(self, paramikoClient, command):
+        ''' 
+        Returns a paramiko ssh response from the paramiko client
+        TODO: error handling
+        '''
+        stdin, stdout, stderr = paramikoClient.exec_command(command)
+
+        return {
+            "stdin": stdin,
+            "stdout": stdout,
+            "stderr": stderr
+        }
+
     def example_inventory(self):
-        ssh = paramiko_connection('homelab', 'root', os.getenv('PVE_ROOT_PASSWORD'))
+        ssh = self.paramiko_connection('homelab', 'root', os.getenv('PVE_ROOT_PASSWORD'))
 
         # Retreive a list of all active containers running on the server.
-        allContainersCommand  = exec_ssh_command(ssh, "pct list | grep 'running' | awk '{print $1, $3}'")
+        allContainersCommand  = self.exec_ssh_command(ssh, "pct list | grep 'running' | awk '{print $1, $3}'")
 
-        all_containers = ProxmoxNodeInventory.createFromContainerResponse(allContainersCommand)
+        inventory = ProxmoxNodeInventory.createFromContainerResponse(allContainersCommand)
 
         # This is a list of every VM with its IP address
-        for host in all_containers.container:
+        for host in inventory.container:
             command = f"pct exec {host.id} -- hostname -I | awk '{{print $1}}'"
-            hostIpCommand = exec_ssh_command(ssh, command)
+            hostIpCommand = self.exec_ssh_command(ssh, command)
             host.setIpAddress(hostIpCommand)
 
-        swarm_manager_containers = all_containers.getContainersByHostnameStartsWith('swarm-manager')
-        swarm_node_containers = all_containers.getContainersByHostnameStartsWith('swarm-node')
+        swarm_manager_containers = inventory.getContainersByHostnameStartsWith('swarm-manager')
+        swarm_node_containers = inventory.getContainersByHostnameStartsWith('swarm-node')
 
-        
-        hostvars = generate_swarm_node_meta(swarm_manager_containers, swarm_node_containers)
+        hostVars = PveVmHostVars.create(inventory)
 
         return {
             'swarmmanagers': {
-                'hosts': [host.ip for host in swarm_manager_containers],
+                'hosts': [host.ip for host in swarm_manager_containers.container],
                 'vars': {
                 }
             },
             'swarmnodes': {
-                'hosts': [host.ip for host in swarm_node_containers],
+                'hosts': [host.ip for host in swarm_node_containers.container],
                 'vars': {
                 }
             },
             '_meta': {
-                'hostvars': hostvars
+                'hostvars': hostVars.toJson()
 
             }
         }
 
-    # Empty inventory for testing.
     def empty_inventory(self):
         return {'_meta': {'hostvars': {}}}
 
-    # Read the command line args passed to the script.
     def read_cli_args(self):
         parser = argparse.ArgumentParser()
         parser.add_argument('--list', action = 'store_true')
@@ -162,4 +193,4 @@ class ProxmoxVmInventory(object):
         self.args = parser.parse_args()
 
 # Get the inventory.
-ProxmoxVmInventory()
+DynamicProxmoxInventory()
